@@ -1,0 +1,61 @@
+<div class="grade-notas">
+  <div class="painel">
+    <div class="painel-titulo">
+      <h2>Notas fiscais</h2>
+      <p-button
+        label="Nova nota"
+        icon="pi pi-plus"
+        [loading]="criando()"
+        (onClick)="criar()"
+      />
+    </div>
+
+    <p-table
+      [value]="notas()"
+      [loading]="carregando()"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="tamanhoPagina"
+      [totalRecords]="total()"
+      (onLazyLoad)="carregarPagina($event)"
+      selectionMode="single"
+      [selection]="null"
+      dataKey="id"
+    >
+      <ng-template #header>
+        <tr>
+          <th>Número</th>
+          <th style="width: 6.5rem">Status</th>
+          <th style="width: 5.5rem">Itens</th>
+          <th style="width: 8rem">Criada</th>
+        </tr>
+      </ng-template>
+
+      <ng-template #body let-nota>
+        <tr
+          [class.selecionada]="nota.id === selecionada()"
+          (click)="selecionada.set(nota.id)"
+          style="cursor: pointer"
+        >
+          <td><strong>{{ nota.numeroFormatado }}</strong></td>
+          <td>
+            <p-tag
+              [severity]="nota.status === 'Aberta' ? 'info' : 'success'"
+              [value]="nota.status"
+            />
+          </td>
+          <td class="discreto">{{ nota.totalUnidades }} un.</td>
+          <td class="discreto">{{ nota.criadaEm | date: 'dd/MM HH:mm' }}</td>
+        </tr>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="4" class="vazio">Nenhuma nota cadastrada.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <app-detalhe-nota [notaId]="selecionada()" (notaAlterada)="recarregar()" />
+</div>

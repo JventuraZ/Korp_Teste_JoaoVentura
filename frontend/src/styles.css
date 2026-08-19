@@ -1,0 +1,423 @@
+@import 'primeicons/primeicons.css';
+
+/* ── Camada semântica de tema ─────────────────────────────────────────────
+   Os tokens --p-surface-N do PrimeNG são a paleta PRIMITIVA: são fixos e não
+   invertem no tema escuro. Por isso a aplicação define os seus próprios tokens
+   semânticos abaixo, e é só neles que o CSS daqui encosta. Trocar de tema passa
+   a ser trocar este bloco, não caçar cor espalhada por arquivo. */
+
+:root {
+  --korp-fundo: #f4f5f7;
+  --korp-painel: #ffffff;
+  --korp-elevado: #fafbfc;
+  --korp-borda: var(--p-surface-200);
+  --korp-borda-suave: var(--p-surface-100);
+  --korp-realce: var(--p-primary-50);
+  --korp-contraste: #ffffff;
+
+  --korp-sombra: 0 1px 2px rgb(0 0 0 / 4%), 0 2px 8px rgb(0 0 0 / 4%);
+  --korp-sombra-alta: 0 2px 6px rgb(0 0 0 / 6%), 0 12px 28px rgb(0 0 0 / 8%);
+
+  --korp-raio: 12px;
+  --korp-raio-pequeno: 8px;
+}
+
+:root.tema-escuro {
+  --korp-fundo: #0f1116;
+  --korp-painel: #171a21;
+  --korp-elevado: #1e222b;
+  --korp-borda: #2a2f3a;
+  --korp-borda-suave: #232833;
+  --korp-realce: color-mix(in srgb, var(--p-primary-color) 18%, transparent);
+  --korp-contraste: #0f1116;
+
+  /* Sombra quase não aparece sobre fundo escuro: a separação passa a vir da
+     borda e da diferença de luminosidade entre as superfícies. */
+  --korp-sombra: 0 1px 2px rgb(0 0 0 / 40%);
+  --korp-sombra-alta: 0 8px 24px rgb(0 0 0 / 45%);
+}
+
+body {
+  margin: 0;
+  background: var(--korp-fundo);
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  color: var(--p-text-color);
+  -webkit-font-smoothing: antialiased;
+
+  /* A troca de tema fica suave em vez de piscar. */
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.painel {
+  background: var(--korp-painel);
+  border: 1px solid var(--korp-borda-suave);
+  border-radius: var(--korp-raio);
+  padding: 1.5rem;
+  box-shadow: var(--korp-sombra);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.painel-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.painel-titulo h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.vazio {
+  padding: 2rem;
+  text-align: center;
+  color: var(--p-text-muted-color);
+}
+
+.linha {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.campo label {
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+}
+
+.grade-notas {
+  display: grid;
+  /* A lista precisa de largura real: as colunas Status, Itens e Criada já somam
+     ~22rem de largura fixa, e o número da nota ficava sem espaço. */
+  grid-template-columns: minmax(420px, 34%) 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (min-width: 1600px) {
+  .grade-notas {
+    grid-template-columns: minmax(480px, 30%) 1fr;
+  }
+}
+
+@media (max-width: 1100px) {
+  .grade-notas {
+    grid-template-columns: 1fr;
+  }
+}
+
+.discreto {
+  color: var(--p-text-muted-color);
+  font-size: 0.85rem;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+tr.selecionada > td {
+  background: var(--korp-realce);
+}
+
+.rodape-nota {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--korp-borda-suave);
+}
+
+.processando {
+  margin-top: 1rem;
+}
+
+.processando small {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--p-text-muted-color);
+}
+
+.sugestao {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.sugestao span {
+  flex: 1;
+}
+
+.sugestao small {
+  color: var(--p-text-muted-color);
+}
+
+.sugestao small.sem-saldo {
+  color: var(--p-red-500);
+  font-weight: 600;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.cartoes-risco {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.cartoes-risco .cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  border-left: 4px solid;
+  background: var(--korp-elevado);
+  font-size: 0.85rem;
+  color: var(--p-text-muted-color);
+}
+
+.cartoes-risco .numero {
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--p-text-color);
+}
+
+.cartoes-risco .critico { border-color: var(--p-red-500); }
+.cartoes-risco .atencao { border-color: var(--p-orange-500); }
+.cartoes-risco .ok      { border-color: var(--p-green-500); }
+
+.selo-critico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  margin-left: 0.35rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--p-red-500);
+  color: var(--korp-contraste);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ── Aba fiscal ──────────────────────────────────────────────────────────── */
+
+.cabecalho-produto {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.cabecalho-produto h1 {
+  margin: 0.35rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--p-text-muted-color);
+  text-decoration: none;
+}
+
+.voltar:hover { color: var(--p-primary-color); }
+
+.aviso-fiscal { display: block; margin-bottom: 1rem; }
+.nota-secao { display: block; margin-bottom: 1rem; }
+
+.resumo-fiscal { margin-bottom: 1.25rem; }
+
+.grade-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem;
+}
+
+.item-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: var(--korp-elevado);
+}
+
+.problemas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.acordeao-fiscal { display: block; }
+
+.grade-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.campo-checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+  padding-top: 1.6rem;
+}
+
+.linha-conflito > td {
+  background: color-mix(in srgb, var(--p-red-500) 10%, transparent);
+}
+
+.editor-regra h3 {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.resultado-simulacao { margin-top: 1.25rem; }
+
+.cabecalho-simulacao {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.cabecalho-simulacao > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: var(--korp-elevado);
+}
+
+.trilha { margin-top: 1rem; }
+
+.passos-trilha {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+  line-height: 1.7;
+}
+
+.candidatas { margin: 0.35rem 0 0; padding-left: 1.25rem; }
+.candidatas .escolhida { font-weight: 600; color: var(--p-primary-color); }
+
+.mt { margin-top: 1rem; }
+.ml { margin-left: 0.5rem; }
+
+/* ── Polimento visual ────────────────────────────────────────────────────── */
+
+h1, h2, h3 { letter-spacing: -0.015em; }
+
+.painel-titulo h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Estado vazio deixa de ser uma linha de texto solta. */
+.vazio {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--p-text-muted-color);
+  line-height: 1.6;
+}
+
+.discreto {
+  color: var(--p-text-muted-color);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.88em;
+  padding: 0.12em 0.4em;
+  border-radius: 5px;
+  background: var(--korp-elevado);
+  border: 1px solid var(--korp-borda-suave);
+}
+
+/* Cartões de status e de risco: faixa colorida à esquerda, superfície elevada. */
+.cartoes-risco .cartao,
+.item-status,
+.cabecalho-simulacao > div {
+  background: var(--korp-elevado);
+  border: 1px solid var(--korp-borda-suave);
+  border-radius: var(--korp-raio-pequeno);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.cartoes-risco .cartao:hover { box-shadow: var(--korp-sombra); }
+
+/* Linha de tabela reage ao ponteiro: dá noção de que é clicável. */
+tbody tr { transition: background-color 0.12s ease; }
+
+.grade-notas tbody tr:hover > td,
+.p-datatable tbody tr[style*='cursor'] :hover {
+  background: var(--korp-elevado);
+}
+
+/* Campos com respiro maior e rótulo mais legível. */
+.campo label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--p-text-color);
+  letter-spacing: 0.01em;
+}
+
+.campo small { line-height: 1.45; }
+
+/* Barra de progresso da impressão com mais destaque. */
+.processando {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--korp-raio-pequeno);
+  background: var(--korp-elevado);
+  border: 1px solid var(--korp-borda-suave);
+}
+
+/* Avisos e mensagens ocupam a largura toda, com respiro entre si. */
+.problemas p-message,
+.acordeao-fiscal p-message { display: block; }
+
+/* Foco visível para navegação por teclado — acessibilidade básica. */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
+  border-radius: 6px;
+}

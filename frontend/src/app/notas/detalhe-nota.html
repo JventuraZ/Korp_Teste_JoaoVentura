@@ -1,0 +1,134 @@
+@if (!notaId) {
+  <div class="painel">
+    <div class="vazio">
+      <i class="pi pi-file" style="font-size: 2rem; opacity: 0.4"></i>
+      <p>Selecione uma nota à esquerda ou crie uma nova.</p>
+    </div>
+  </div>
+} @else if (nota(); as notaAtual) {
+  <div class="painel">
+    <div class="painel-titulo">
+      <h2>{{ notaAtual.numeroFormatado }}</h2>
+      <p-tag
+        [severity]="notaAtual.status === 'Aberta' ? 'info' : 'success'"
+        [value]="notaAtual.status"
+        [icon]="notaAtual.status === 'Aberta' ? 'pi pi-pencil' : 'pi pi-lock'"
+      />
+    </div>
+
+    @if (notaAtual.status === 'Aberta') {
+      <div class="linha">
+        <div class="campo" style="flex: 1; min-width: 18rem">
+          <label>Produto</label>
+          <p-autocomplete
+            [(ngModel)]="produtoSelecionado"
+            [suggestions]="sugestoes()"
+            (completeMethod)="buscarProdutos($event)"
+            optionLabel="codigo"
+            placeholder="Digite o código ou a descrição"
+            [forceSelection]="true"
+            [disabled]="imprimindo()"
+          >
+            <ng-template #item let-produto>
+              <div class="sugestao">
+                <code>{{ produto.codigo }}</code>
+                <span>{{ produto.descricao }}</span>
+                <small [class.sem-saldo]="produto.saldo === 0">saldo {{ produto.saldo }}</small>
+              </div>
+            </ng-template>
+          </p-autocomplete>
+        </div>
+
+        <div class="campo" style="width: 9rem">
+          <label>Quantidade</label>
+          <p-inputnumber
+            [(ngModel)]="quantidade"
+            [min]="1"
+            [showButtons]="true"
+            [disabled]="imprimindo()"
+          />
+        </div>
+
+        <p-button
+          label="Incluir"
+          icon="pi pi-plus"
+          [loading]="adicionando()"
+          [disabled]="imprimindo()"
+          (onClick)="adicionarItem()"
+        />
+      </div>
+    }
+
+    <p-table [value]="notaAtual.itens" [tableStyle]="{ 'min-width': '32rem' }" styleClass="tabela-itens">
+      <ng-template #header>
+        <tr>
+          <th style="width: 10rem">Código</th>
+          <th>Descrição</th>
+          <th style="width: 7rem">Qtd.</th>
+          @if (notaAtual.status === 'Aberta') {
+            <th style="width: 4rem"></th>
+          }
+        </tr>
+      </ng-template>
+
+      <ng-template #body let-item>
+        <tr>
+          <td><code>{{ item.codigo }}</code></td>
+          <td>{{ item.descricao }}</td>
+          <td>{{ item.quantidade }}</td>
+          @if (notaAtual.status === 'Aberta') {
+            <td>
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                [text]="true"
+                [disabled]="imprimindo()"
+                (onClick)="removerItem(item.id)"
+                [ariaLabel]="'Remover ' + item.codigo"
+              />
+            </td>
+          }
+        </tr>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <tr>
+          <td [attr.colspan]="notaAtual.status === 'Aberta' ? 4 : 3" class="vazio">
+            Inclua produtos para poder imprimir a nota.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+
+    <div class="rodape-nota">
+      <span class="discreto">
+        {{ notaAtual.itens.length }} item(ns) · {{ totalUnidades() }} unidade(s)
+      </span>
+
+      <p-button
+        label="Imprimir nota"
+        icon="pi pi-print"
+        size="large"
+        [loading]="imprimindo()"
+        [disabled]="!notaAtual.podeImprimir || imprimindo()"
+        (onClick)="imprimir()"
+      />
+    </div>
+
+    @if (imprimindo()) {
+      <div class="processando">
+        <p-progressbar mode="indeterminate" [style]="{ height: '6px' }" />
+        <small>Baixando estoque e fechando a nota…</small>
+      </div>
+    }
+
+    @if (notaAtual.status === 'Fechada') {
+      <p class="discreto">
+        <i class="pi pi-check-circle"></i>
+        Impressa em {{ notaAtual.fechadaEm | date: 'dd/MM/yyyy HH:mm:ss' }} — o estoque já foi debitado.
+      </p>
+    }
+  </div>
+} @else if (carregando()) {
+  <div class="painel"><div class="vazio">Carregando…</div></div>
+}

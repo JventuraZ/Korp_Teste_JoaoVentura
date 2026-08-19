@@ -1,0 +1,162 @@
+<p-dialog
+  [header]="emEdicao() ? 'Editar regra tributária' : 'Nova regra tributária'"
+  [visible]="aberto"
+  (visibleChange)="!$event && fechar.emit()"
+  [modal]="true"
+  [style]="{ width: '56rem' }"
+>
+  @if (referencias) {
+    <div class="editor-regra">
+      <div class="grade-campos">
+        <div class="campo" style="grid-column: span 2">
+          <label>Descrição da regra</label>
+          <input pInputText [(ngModel)]="rascunho.descricao"
+            placeholder="Ex.: Venda interestadual para contribuinte" />
+        </div>
+        <div class="campo">
+          <label>Prioridade <i class="pi pi-info-circle discreto"
+            pTooltip="Só desempata regras de mesma especificidade. Maior vence."></i></label>
+          <p-inputnumber [(ngModel)]="rascunho.prioridade" [min]="0" [max]="999" />
+        </div>
+        <div class="campo campo-checkbox">
+          <p-checkbox [(ngModel)]="rascunho.ativa" [binary]="true" inputId="ativa" />
+          <label for="ativa">Regra ativa</label>
+        </div>
+      </div>
+
+      <h3>Quando esta regra se aplica</h3>
+      <p-message severity="info">
+        <div>
+          Deixe <strong>Qualquer</strong> nos campos que não importam para esta regra.
+          Quanto mais condições você fixar, mais específica ela fica — e a regra mais
+          específica vence as demais, sem depender da prioridade.
+          <br /><strong>Especificidade atual: {{ especificidade() }} condição(ões).</strong>
+        </div>
+      </p-message>
+
+      <div class="grade-campos">
+        <div class="campo">
+          <label>Operação</label>
+          <p-select [(ngModel)]="rascunho.condicoes.operacao" [options]="referencias.tiposOperacao"
+            optionLabel="descricao" optionValue="codigo" placeholder="Qualquer"
+            [showClear]="true" appendTo="body" />
+        </div>
+        <div class="campo">
+          <label>UF de origem</label>
+          <p-select [(ngModel)]="rascunho.condicoes.ufOrigem" [options]="referencias.ufs"
+            placeholder="Qualquer" [showClear]="true" appendTo="body" />
+        </div>
+        <div class="campo">
+          <label>UF de destino</label>
+          <p-select [(ngModel)]="rascunho.condicoes.ufDestino" [options]="referencias.ufs"
+            placeholder="Qualquer" [showClear]="true" appendTo="body" />
+        </div>
+        <div class="campo">
+          <label>Tipo de cliente</label>
+          <p-select [(ngModel)]="rascunho.condicoes.tipoCliente" [options]="referencias.tiposCliente"
+            optionLabel="descricao" optionValue="codigo" placeholder="Qualquer"
+            [showClear]="true" appendTo="body" />
+        </div>
+        <div class="campo">
+          <label>Consumidor final</label>
+          <p-select [(ngModel)]="rascunho.condicoes.consumidorFinal" [options]="opcoesTernarias"
+            optionLabel="rotulo" optionValue="valor" appendTo="body" />
+        </div>
+        <div class="campo">
+          <label>Contribuinte de ICMS</label>
+          <p-select [(ngModel)]="rascunho.condicoes.contribuinteIcms" [options]="opcoesTernarias"
+            optionLabel="rotulo" optionValue="valor" appendTo="body" />
+        </div>
+        <div class="campo">
+          <label>Regime da empresa</label>
+          <p-select [(ngModel)]="rascunho.condicoes.regimeEmpresa" [options]="referencias.regimesTributarios"
+            optionLabel="descricao" optionValue="codigo" placeholder="Qualquer"
+            [showClear]="true" appendTo="body" />
+        </div>
+        <div class="campo">
+          <label>Finalidade</label>
+          <p-select [(ngModel)]="rascunho.condicoes.finalidade" [options]="referencias.finalidades"
+            optionLabel="descricao" optionValue="codigo" placeholder="Qualquer"
+            [showClear]="true" appendTo="body" />
+        </div>
+      </div>
+
+      <h3>O que ela determina</h3>
+      <div class="grade-campos">
+        <div class="campo">
+          <label>CFOP</label>
+          <input pInputText [(ngModel)]="rascunho.resultado.cfop" placeholder="5102" />
+        </div>
+        <div class="campo">
+          <label>CST de ICMS <small class="discreto">(regime normal)</small></label>
+          <p-select [(ngModel)]="rascunho.resultado.cstIcms" [options]="referencias.cstIcms"
+            optionLabel="descricao" optionValue="codigo" placeholder="Selecione"
+            [showClear]="true" appendTo="body" />
+        </div>
+        <div class="campo">
+          <label>CSOSN <small class="discreto">(Simples Nacional)</small></label>
+          <p-select [(ngModel)]="rascunho.resultado.csosn" [options]="referencias.csosn"
+            optionLabel="descricao" optionValue="codigo" placeholder="Selecione"
+            [showClear]="true" appendTo="body" />
+        </div>
+      </div>
+
+      <!-- Visibilidade condicional: os campos abaixo mudam conforme o CST/CSOSN,
+           e o mapa que define isso vem do servidor. -->
+      @if (camposAplicaveis().length > 0) {
+        <p class="discreto">
+          Campos aplicáveis ao
+          {{ rascunho.resultado.csosn ? 'CSOSN ' + rascunho.resultado.csosn : 'CST ' + rascunho.resultado.cstIcms }}:
+        </p>
+        <div class="grade-campos">
+          @for (campo of camposAplicaveis(); track campo) {
+            <div class="campo">
+              <label>{{ rotulo(campo) }}</label>
+              <p-inputnumber [ngModel]="valorDe(campo)" (ngModelChange)="definir(campo, $event)"
+                [min]="0" [maxFractionDigits]="4" />
+            </div>
+          }
+        </div>
+      } @else if (rascunho.resultado.cstIcms || rascunho.resultado.csosn) {
+        <p-message severity="info"
+          text="Esta situação tributária não exige campos adicionais de ICMS." />
+      }
+
+      <h3>PIS, COFINS e IPI</h3>
+      <div class="grade-campos">
+        <div class="campo">
+          <label>CST do PIS</label>
+          <p-select [(ngModel)]="rascunho.resultado.cstPis" [options]="referencias.cstPisCofins"
+            optionLabel="descricao" optionValue="codigo" [showClear]="true" appendTo="body" />
+        </div>
+        <div class="campo">
+          <label>Alíquota do PIS (%)</label>
+          <p-inputnumber [(ngModel)]="rascunho.resultado.aliquotaPis" [min]="0" [maxFractionDigits]="4" />
+        </div>
+        <div class="campo">
+          <label>CST da COFINS</label>
+          <p-select [(ngModel)]="rascunho.resultado.cstCofins" [options]="referencias.cstPisCofins"
+            optionLabel="descricao" optionValue="codigo" [showClear]="true" appendTo="body" />
+        </div>
+        <div class="campo">
+          <label>Alíquota da COFINS (%)</label>
+          <p-inputnumber [(ngModel)]="rascunho.resultado.aliquotaCofins" [min]="0" [maxFractionDigits]="4" />
+        </div>
+        <div class="campo">
+          <label>CST do IPI</label>
+          <p-select [(ngModel)]="rascunho.resultado.cstIpi" [options]="referencias.cstIpi"
+            optionLabel="descricao" optionValue="codigo" [showClear]="true" appendTo="body" />
+        </div>
+        <div class="campo">
+          <label>Alíquota do IPI (%)</label>
+          <p-inputnumber [(ngModel)]="rascunho.resultado.aliquotaIpi" [min]="0" [maxFractionDigits]="4" />
+        </div>
+      </div>
+    </div>
+  }
+
+  <ng-template #footer>
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="fechar.emit()" />
+    <p-button label="Salvar regra" icon="pi pi-check" [disabled]="!podeSalvar()" (onClick)="confirmar()" />
+  </ng-template>
+</p-dialog>

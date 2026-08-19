@@ -1,0 +1,46 @@
+<p-toast position="top-right" />
+
+<header class="cabecalho">
+  <div class="marca">
+    <i class="pi pi-box"></i>
+    <span>Korp <strong>Faturamento</strong></span>
+  </div>
+
+  <nav>
+    <a routerLink="/notas" routerLinkActive="ativo">
+      <i class="pi pi-file"></i> Notas fiscais
+    </a>
+    <a routerLink="/produtos" routerLinkActive="ativo">
+      <i class="pi pi-tags"></i> Produtos
+    </a>
+    <a routerLink="/insights" routerLinkActive="ativo">
+      <i class="pi pi-chart-line"></i> Previsão
+      @if (criticos() > 0) {
+        <span class="selo-critico">{{ criticos() }}</span>
+      }
+    </a>
+  </nav>
+
+  <div class="acoes-cabecalho">
+    <p-tag
+      [severity]="estoqueOnline() ? 'success' : 'danger'"
+      [value]="estoqueOnline() ? 'Estoque online' : 'Estoque indisponível'"
+      [icon]="estoqueOnline() ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle'"
+    />
+
+    <p-button
+      [icon]="tema.icone()"
+      severity="secondary"
+      [text]="true"
+      [rounded]="true"
+      [pTooltip]="tema.rotulo() + ' — clique para alternar'"
+      tooltipPosition="bottom"
+      [ariaLabel]="tema.rotulo()"
+      (onClick)="tema.alternar()"
+    />
+  </div>
+</header>
+
+<main>
+  <router-outlet />
+</main>

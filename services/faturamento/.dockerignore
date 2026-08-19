@@ -1,0 +1,5 @@
+# Artefatos de build do host nao entram no contexto: eles seriam recompilados
+# de qualquer forma e so aumentam o tempo de envio para o daemon.
+**/bin/
+**/obj/
+Faturamento.Testes/

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Frontend</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>
+    // Aplica o tema ANTES do Angular subir. Sem isto, a tela pisca em branco
+    // por alguns quadros antes de escurecer -- o "flash of wrong theme".
+    (function () {
+      try {
+        var pref = localStorage.getItem('korp.tema') || 'sistema';
+        var escuro = pref === 'escuro' ||
+          (pref === 'sistema' && matchMedia('(prefers-color-scheme: dark)').matches);
+        if (escuro) document.documentElement.classList.add('tema-escuro');
+      } catch (e) { /* localStorage bloqueado: segue no tema claro */ }
+    })();
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>

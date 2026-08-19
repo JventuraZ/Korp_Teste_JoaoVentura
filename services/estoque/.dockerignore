@@ -1,0 +1,5 @@
+# O binario compilado no host nao serve dentro da imagem (e recompilado no
+# estagio de construcao) e custa ~18MB de contexto a cada build.
+estoque
+bin/
+*.test

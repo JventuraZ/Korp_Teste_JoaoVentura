@@ -1,0 +1,86 @@
+.cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--korp-borda-suave);
+  background: var(--korp-painel);
+
+  /* Fica no topo ao rolar: em tela densa como a fiscal, perder o selo de saúde
+     e o contador de itens críticos de vista anula o propósito deles. */
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  color: var(--p-primary-color);
+  white-space: nowrap;
+}
+
+.marca strong {
+  color: var(--p-text-color);
+  font-weight: 600;
+}
+
+.cabecalho nav {
+  display: flex;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.cabecalho nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--korp-raio-pequeno);
+  color: var(--p-text-muted-color);
+  text-decoration: none;
+  font-size: 0.92rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.cabecalho nav a:hover {
+  background: var(--korp-elevado);
+  color: var(--p-text-color);
+}
+
+.cabecalho nav a.ativo {
+  background: var(--korp-realce);
+  color: var(--p-primary-color);
+  font-weight: 600;
+}
+
+.acoes-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+main {
+  padding: 1.75rem 1.75rem 3rem;
+  /* Em monitor grande, 1240px deixava faixa larga ociosa dos dois lados
+     enquanto a lista de notas ficava espremida. */
+  max-width: 1560px;
+  margin: 0 auto;
+}
+
+@media (max-width: 720px) {
+  .cabecalho {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .cabecalho nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+  }
+}

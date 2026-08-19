@@ -1,0 +1,141 @@
+<div class="painel">
+  <div class="painel-titulo">
+    <div>
+      <h2>Previsão de ruptura</h2>
+      <small class="discreto">
+        Consumo estimado por média móvel exponencial sobre o histórico de baixas
+        @if (geradoEm()) {
+          · calculado em {{ geradoEm() | date: 'dd/MM HH:mm:ss' }}
+        }
+      </small>
+    </div>
+
+    <div class="linha">
+      <p-selectbutton
+        [options]="janelas"
+        [(ngModel)]="janela"
+        optionLabel="rotulo"
+        optionValue="valor"
+        [allowEmpty]="false"
+        (onChange)="carregar()"
+      />
+      <p-button
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="carregando()"
+        (onClick)="carregar()"
+        ariaLabel="Recalcular"
+      />
+    </div>
+  </div>
+
+  <div class="cartoes-risco">
+    <div class="cartao critico">
+      <span class="numero">{{ contar('CRITICO') }}</span>
+      <span>crítico(s) — menos de 7 dias</span>
+    </div>
+    <div class="cartao atencao">
+      <span class="numero">{{ contar('ATENCAO') }}</span>
+      <span>em atenção — menos de 21 dias</span>
+    </div>
+    <div class="cartao ok">
+      <span class="numero">{{ contar('OK') }}</span>
+      <span>com folga</span>
+    </div>
+  </div>
+
+  <p-table
+    [value]="previsoes()"
+    [loading]="carregando()"
+    [tableStyle]="{ 'min-width': '52rem' }"
+  >
+    <ng-template #header>
+      <tr>
+        <th style="width: 9rem">Produto</th>
+        <th>Descrição</th>
+        <th style="width: 6rem">Saldo</th>
+        <th style="width: 9rem">Consumo/dia</th>
+        <th style="width: 12rem">Projeção</th>
+        <th style="width: 8rem">Risco</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-item>
+      <tr>
+        <td><code>{{ item.codigo }}</code></td>
+        <td>{{ item.descricao }}</td>
+        <td>{{ item.saldo }}</td>
+        <td class="discreto">{{ item.consumoDiario | number: '1.2-2' }} un.</td>
+        <td>
+          <strong>{{ prazoEmPalavras(item) }}</strong>
+          @if (item.dataRupturaEstimada && item.saldo > 0) {
+            <br />
+            <small class="discreto">{{ item.dataRupturaEstimada | date: 'dd/MM/yyyy' }}</small>
+          }
+        </td>
+        <td>
+          <p-tag [severity]="severidade(item.risco)" [value]="rotuloRisco(item.risco)" />
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6" class="vazio">Sem produtos ativos para analisar.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<div class="painel" style="margin-top: 1.25rem">
+  <div class="painel-titulo">
+    <div>
+      <h2>Movimentos atípicos</h2>
+      <small class="discreto">
+        Baixas que destoam do padrão do próprio produto, por mediana e desvio
+        absoluto mediano — cada item é comparado com o próprio histórico, não com
+        uma média geral
+      </small>
+    </div>
+  </div>
+
+  <p-table [value]="anomalias()" [loading]="carregando()" [tableStyle]="{ 'min-width': '46rem' }">
+    <ng-template #header>
+      <tr>
+        <th style="width: 9rem">Produto</th>
+        <th style="width: 8rem">Quantidade</th>
+        <th style="width: 10rem">Padrão do item</th>
+        <th style="width: 9rem">Referência</th>
+        <th style="width: 10rem">Quando</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-item>
+      <tr>
+        <td>
+          <code>{{ item.codigo }}</code><br />
+          <small class="discreto">{{ item.descricao }}</small>
+        </td>
+        <td>
+          <p-tag severity="warn" [value]="item.quantidade.toString()" />
+        </td>
+        <td class="discreto">
+          mediana {{ item.medianaDoProduto }}
+          <br />
+          <small>{{ vezesAcima(item) | number: '1.0-1' }}× acima</small>
+        </td>
+        <td class="discreto">{{ item.referencia || '—' }}</td>
+        <td class="discreto">{{ item.momento | date: 'dd/MM/yyyy HH:mm' }}</td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="5" class="vazio">
+          Nenhum movimento atípico na janela — as baixas seguem o padrão de cada produto.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

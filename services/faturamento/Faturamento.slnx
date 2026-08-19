@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Faturamento.Api/Faturamento.Api.csproj" />
+  <Project Path="Faturamento.Testes/Faturamento.Testes.csproj" />
+</Solution>

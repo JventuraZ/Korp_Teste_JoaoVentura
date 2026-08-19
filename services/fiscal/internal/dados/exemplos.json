@@ -1,0 +1,109 @@
+{
+  "_aviso": "DADOS FICTICIOS, para demonstracao da interface. As aliquotas, CFOPs e NCMs abaixo NAO foram conferidos contra a legislacao e NAO devem ser usados para emitir documento fiscal. Substitua por dados da sua base fiscal.",
+  "ncm": [
+    { "codigo": "73181500", "descricao": "Parafusos e pinos ou pernos, roscados, de ferro fundido, ferro ou aço" },
+    { "codigo": "73181600", "descricao": "Porcas de ferro fundido, ferro ou aço" },
+    { "codigo": "73182100", "descricao": "Arruelas de pressão e outras arruelas de segurança" },
+    { "codigo": "84821000", "descricao": "Rolamentos de esferas" },
+    { "codigo": "40103100", "descricao": "Correias de transmissão, sem fim, de secção trapezoidal" }
+  ],
+  "cfop": [
+    { "codigo": "5102", "descricao": "Venda de mercadoria adquirida ou recebida de terceiros" },
+    { "codigo": "6102", "descricao": "Venda de mercadoria adquirida ou recebida de terceiros (interestadual)" },
+    { "codigo": "5405", "descricao": "Venda de mercadoria com ICMS retido por substituição tributária" },
+    { "codigo": "6404", "descricao": "Venda de mercadoria com ICMS retido por ST (interestadual)" },
+    { "codigo": "5202", "descricao": "Devolução de compra para comercialização" },
+    { "codigo": "6202", "descricao": "Devolução de compra para comercialização (interestadual)" },
+    { "codigo": "5152", "descricao": "Transferência de mercadoria adquirida de terceiros" },
+    { "codigo": "6152", "descricao": "Transferência de mercadoria adquirida de terceiros (interestadual)" },
+    { "codigo": "5910", "descricao": "Remessa em bonificação, doação ou brinde" }
+  ],
+  "configuracoes": {
+    "PRD-001": {
+      "codigo": "PRD-001",
+      "ncm": "73181500",
+      "cest": "",
+      "codigoBeneficioFiscal": "",
+      "origemMercadoria": "0",
+      "exTipi": "",
+      "unidadeTributavel": "UN",
+      "quantidadeTributavel": 1,
+      "codigoAnp": "",
+      "producaoPropria": true,
+      "pisCofins": {
+        "cstPis": "01", "aliquotaPis": 1.65, "baseCalculoPis": "VALOR_OPERACAO",
+        "cstCofins": "01", "aliquotaCofins": 7.6, "baseCalculoCofins": "VALOR_OPERACAO"
+      },
+      "ipi": {
+        "cstIpi": "53", "enquadramentoLegal": "", "codigoEnquadramento": "999",
+        "aliquotaIpi": null, "unidadeTributavel": "", "quantidadeTributavel": null, "valorPorUnidade": null
+      }
+    },
+    "PRD-004": {
+      "codigo": "PRD-004",
+      "ncm": "84821000",
+      "cest": "0100100",
+      "codigoBeneficioFiscal": "",
+      "origemMercadoria": "1",
+      "exTipi": "",
+      "unidadeTributavel": "UN",
+      "quantidadeTributavel": 1,
+      "codigoAnp": "",
+      "producaoPropria": false,
+      "pisCofins": {
+        "cstPis": "01", "aliquotaPis": 1.65, "baseCalculoPis": "VALOR_OPERACAO",
+        "cstCofins": "01", "aliquotaCofins": 7.6, "baseCalculoCofins": "VALOR_OPERACAO"
+      },
+      "ipi": {
+        "cstIpi": "50", "enquadramentoLegal": "", "codigoEnquadramento": "999",
+        "aliquotaIpi": 5.0, "unidadeTributavel": "", "quantidadeTributavel": null, "valorPorUnidade": null
+      }
+    }
+  },
+  "regras": {
+    "PRD-001": [
+      {
+        "id": "r-001", "descricao": "Venda dentro do estado (SP)", "prioridade": 10, "ativa": true,
+        "condicoes": { "operacao": "VENDA", "ufOrigem": "SP", "ufDestino": "SP" },
+        "resultado": { "cfop": "5102", "cstIcms": "00", "csosn": "", "aliquotaIcms": 18.0, "cstPis": "01", "aliquotaPis": 1.65, "cstCofins": "01", "aliquotaCofins": 7.6, "cstIpi": "53", "observacao": "Exemplo fictício" }
+      },
+      {
+        "id": "r-002", "descricao": "Venda interestadual para contribuinte", "prioridade": 10, "ativa": true,
+        "condicoes": { "operacao": "VENDA", "ufOrigem": "SP", "contribuinteIcms": true, "consumidorFinal": false },
+        "resultado": { "cfop": "6102", "cstIcms": "00", "csosn": "", "aliquotaIcms": 12.0, "aliquotaInterestadual": 12.0, "cstPis": "01", "aliquotaPis": 1.65, "cstCofins": "01", "aliquotaCofins": 7.6, "cstIpi": "53", "observacao": "Exemplo fictício" }
+      },
+      {
+        "id": "r-003", "descricao": "Devolução", "prioridade": 5, "ativa": true,
+        "condicoes": { "operacao": "DEVOLUCAO" },
+        "resultado": { "cfop": "5202", "cstIcms": "00", "csosn": "", "aliquotaIcms": 18.0, "cstPis": "49", "cstCofins": "49", "cstIpi": "53", "observacao": "Exemplo fictício" }
+      },
+      {
+        "id": "r-004", "descricao": "Transferência entre filiais", "prioridade": 5, "ativa": true,
+        "condicoes": { "operacao": "TRANSFERENCIA" },
+        "resultado": { "cfop": "5152", "cstIcms": "00", "csosn": "", "aliquotaIcms": 18.0, "cstPis": "49", "cstCofins": "49", "cstIpi": "53", "observacao": "Exemplo fictício" }
+      },
+      {
+        "id": "r-005", "descricao": "Regra geral de venda", "prioridade": 1, "ativa": true,
+        "condicoes": { "operacao": "VENDA" },
+        "resultado": { "cfop": "5102", "cstIcms": "00", "csosn": "", "aliquotaIcms": 18.0, "cstPis": "01", "aliquotaPis": 1.65, "cstCofins": "01", "aliquotaCofins": 7.6, "cstIpi": "53", "observacao": "Exemplo fictício" }
+      }
+    ],
+    "PRD-004": [
+      {
+        "id": "r-101", "descricao": "Venda interna com ST", "prioridade": 10, "ativa": true,
+        "condicoes": { "operacao": "VENDA", "ufDestino": "SP" },
+        "resultado": { "cfop": "5405", "cstIcms": "60", "csosn": "", "cstPis": "01", "aliquotaPis": 1.65, "cstCofins": "01", "aliquotaCofins": 7.6, "cstIpi": "50", "aliquotaIpi": 5.0, "observacao": "Exemplo fictício" }
+      },
+      {
+        "id": "r-102", "descricao": "Venda para pessoa jurídica", "prioridade": 10, "ativa": true,
+        "condicoes": { "operacao": "VENDA", "tipoCliente": "PJ" },
+        "resultado": { "cfop": "6102", "cstIcms": "00", "csosn": "", "aliquotaIcms": 12.0, "cstPis": "01", "aliquotaPis": 1.65, "cstCofins": "01", "aliquotaCofins": 7.6, "cstIpi": "50", "aliquotaIpi": 5.0, "observacao": "Exemplo fictício — conflita de propósito com r-101" }
+      },
+      {
+        "id": "r-103", "descricao": "Remessa em bonificação", "prioridade": 5, "ativa": false,
+        "condicoes": { "operacao": "BONIFICACAO" },
+        "resultado": { "cfop": "5910", "cstIcms": "00", "csosn": "", "aliquotaIcms": 18.0, "cstPis": "49", "cstCofins": "49", "cstIpi": "53", "observacao": "Exemplo fictício — inativa" }
+      }
+    ]
+  }
+}

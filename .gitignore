@@ -1,0 +1,35 @@
+# ── Segredos ───────────────────────────────────────────────────────────
+# Este repositorio e PUBLICO. Nada de credencial versionada.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ── Go ─────────────────────────────────────────────────────────────────
+/services/estoque/bin/
+/services/estoque/estoque
+*.test
+*.out
+
+# ── .NET ───────────────────────────────────────────────────────────────
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+.vs/
+
+# ── Node / Angular ─────────────────────────────────────────────────────
+node_modules/
+/frontend/dist/
+/frontend/.angular/
+/frontend/coverage/
+npm-debug.log*
+
+# ── Editores e SO ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store

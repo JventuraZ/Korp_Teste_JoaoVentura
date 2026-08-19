@@ -1,0 +1,5 @@
+# node_modules do host nunca entra: e reinstalado com `npm ci` dentro da imagem,
+# e enviar ~600MB de contexto para o build tornaria cada rebuild insuportavel.
+node_modules/
+dist/
+.angular/

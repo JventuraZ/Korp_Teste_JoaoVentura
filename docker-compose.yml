@@ -1,0 +1,129 @@
+# Executado com podman-compose:
+#   podman-compose up -d --build
+#
+# Sobe o sistema inteiro, incluindo o frontend servido por nginx em :8080.
+# Para desenvolver o frontend com recarga automatica, use `npm start` no host
+# (porta 4200, com proxy.conf.json) -- as duas formas convivem.
+#
+# O cenario de falha se demonstra com:
+#   podman stop korp-estoque   -> derruba o Estoque com o resto de pe
+
+services:
+  postgres:
+    image: docker.io/library/postgres:18-alpine
+    container_name: korp-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-korp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-korp_dev_senha}
+      POSTGRES_DB: postgres
+    ports:
+      # Publicado SO no loopback: com a porta em 0.0.0.0 e a senha padrao
+      # deste repositorio, qualquer maquina da rede local le e escreve no banco.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # A partir do Postgres 18 a imagem oficial guarda os dados em um
+      # subdiretorio por versao (/var/lib/postgresql/18/docker) e espera UM
+      # mount em /var/lib/postgresql. Montar no antigo /var/lib/postgresql/data
+      # faz o container recusar a subir.
+      - dados_postgres:/var/lib/postgresql
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro,z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-korp} -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [korp]
+
+  estoque:
+    build:
+      context: ./services/estoque
+    container_name: korp-estoque
+    environment:
+      ESTOQUE_PORT: 8081
+      # As migrations sao aplicadas pelo proprio servico na subida (goose + embed.FS).
+      ESTOQUE_DATABASE_URL: postgres://${POSTGRES_USER:-korp}:${POSTGRES_PASSWORD:-korp_dev_senha}@postgres:5432/db_estoque?sslmode=disable
+    ports:
+      # Loopback: o nginx alcanca este servico pela rede interna do compose.
+      # A porta no host existe apenas para os scripts de demo e depuracao local.
+      - "127.0.0.1:${ESTOQUE_PORT:-8081}:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/estoque", "-healthcheck"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks: [korp]
+
+  faturamento:
+    build:
+      context: ./services/faturamento
+    container_name: korp-faturamento
+    environment:
+      ASPNETCORE_URLS: http://+:8082
+      ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=db_faturamento;Username=${POSTGRES_USER:-korp};Password=${POSTGRES_PASSWORD:-korp_dev_senha}
+      Estoque__BaseUrl: http://estoque:8081
+    ports:
+      - "127.0.0.1:${FATURAMENTO_PORT:-8082}:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Deliberadamente NAO depende do estoque estar saudavel: o servico precisa
+    # subir e responder mesmo com o Estoque fora do ar. E o requisito obrigatorio no 2.
+    healthcheck:
+      # /health/vivo, e nao /health: aquela rota consulta o Estoque atraves do
+      # Polly e pode levar >15s com a dependencia caida, marcando este container
+      # unhealthy por causa do vizinho -- o oposto do que o requisito 2 exige.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8082/health/vivo || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      # Folgado porque o servico aplica as migrations do EF Core na subida.
+      start_period: 25s
+    networks: [korp]
+
+  fiscal:
+    build:
+      context: ./services/fiscal
+    container_name: korp-fiscal
+    environment:
+      FISCAL_PORT: "8083"
+    ports:
+      - "127.0.0.1:${FISCAL_PORT:-8083}:8083"
+    healthcheck:
+      test: ["CMD", "/app/fiscal", "-healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks: [korp]
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: korp-frontend
+    ports:
+      # A UNICA porta aberta na rede: e a aplicacao, e o acesso de outro
+      # dispositivo da rede local e desejado para testar.
+      - "${FRONTEND_PORT:-8080}:8080"
+    # Tambem nao depende do estoque: a tela precisa carregar e mostrar o erro
+    # tratado quando o Estoque esta fora -- e isso que o usuario vai ver.
+    depends_on:
+      - faturamento
+      - fiscal
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks: [korp]
+
+volumes:
+  dados_postgres:
+
+networks:
+  korp:
+    driver: bridge

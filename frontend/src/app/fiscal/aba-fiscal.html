@@ -1,0 +1,437 @@
+@if (carregando()) {
+  <div class="vazio">Carregando configuração fiscal…</div>
+} @else if (configuracao && referencias(); as _) {
+
+  <p-message severity="warn" styleClass="aviso-fiscal">
+    <div>
+      <strong>Protótipo com dados fictícios.</strong>
+      As alíquotas, CFOPs e NCMs desta tela são exemplos para demonstrar a interface e
+      <strong>não foram conferidos contra a legislação</strong>. Nada aqui é persistido em banco.
+    </div>
+  </p-message>
+
+  <!-- Status fiscal: sempre derivado da configuração, nunca digitado. -->
+  <div class="painel resumo-fiscal">
+    <div class="painel-titulo">
+      <h2>
+        Status fiscal do produto
+        <p-tag
+          [severity]="severidade(resumo()?.situacao)"
+          [value]="rotuloSituacao(resumo()?.situacao)"
+          styleClass="ml"
+        />
+      </h2>
+      <div class="linha">
+        <p-button label="Validar configuração fiscal" icon="pi pi-check-circle"
+          severity="secondary" [outlined]="true" [loading]="validando()" (onClick)="validar()" />
+      </div>
+    </div>
+
+    <div class="grade-status">
+      <div class="item-status">
+        <span class="discreto">NCM</span>
+        <strong>{{ configuracao.ncm || '—' }}</strong>
+      </div>
+      <div class="item-status">
+        <span class="discreto">CEST</span>
+        <strong>{{ configuracao.cest || 'não informado' }}</strong>
+      </div>
+      @for (area of areasDoResumo(); track area.nome) {
+        <div class="item-status">
+          <span class="discreto">{{ area.nome }}</span>
+          <p-tag [severity]="severidade(area.situacao)" [value]="rotuloSituacao(area.situacao)" />
+        </div>
+      }
+      <div class="item-status">
+        <span class="discreto">Regras por operação</span>
+        <strong>{{ resumo()?.regrasAtivas }} ativa(s) de {{ resumo()?.totalRegras }}</strong>
+      </div>
+    </div>
+
+    @if (validacao(); as v) {
+      <div class="problemas">
+        @if (v.valida) {
+          <p-message severity="success" text="Nenhum impedimento estrutural para a emissão." />
+        }
+        @for (p of v.problemas; track $index) {
+          <p-message [severity]="p.gravidade === 'ERRO' ? 'error' : 'warn'">
+            <div>
+              <strong>{{ p.area }}:</strong> {{ p.mensagem }}
+              <br /><small class="discreto">{{ p.comoResolver }}</small>
+            </div>
+          </p-message>
+        }
+      </div>
+    }
+  </div>
+
+  <p-accordion [value]="['classificacao', 'regras']" [multiple]="true" styleClass="acordeao-fiscal">
+
+    <!-- 1. Classificação fiscal -->
+    <p-accordion-panel value="classificacao">
+      <p-accordion-header>Classificação fiscal</p-accordion-header>
+      <p-accordion-content>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>NCM <i class="pi pi-info-circle discreto"
+              pTooltip="Nomenclatura Comum do Mercosul: 8 dígitos. Define a classificação do produto e é obrigatório na NF-e."></i></label>
+            <p-autocomplete [(ngModel)]="ncmSelecionado" [suggestions]="sugestoesNcm()"
+              (completeMethod)="buscarNcm($event)" (ngModelChange)="aoEscolherNcm()"
+              optionLabel="codigo" placeholder="Busque por código ou descrição">
+              <ng-template #item let-item>
+                <div class="sugestao">
+                  <code>{{ item.codigo }}</code><span>{{ item.descricao }}</span>
+                </div>
+              </ng-template>
+            </p-autocomplete>
+          </div>
+
+          <div class="campo">
+            <label>CEST <i class="pi pi-info-circle discreto"
+              pTooltip="Código Especificador da Substituição Tributária: 7 dígitos. Obrigatório para produtos sujeitos a ST."></i></label>
+            <p-inputmask [(ngModel)]="configuracao.cest" mask="9999999"
+              placeholder="0000000" (ngModelChange)="recalcularResumo()" />
+          </div>
+
+          <div class="campo">
+            <label>Origem da mercadoria</label>
+            <p-select [(ngModel)]="configuracao.origemMercadoria"
+              [options]="referencias()!.origensMercadoria" optionLabel="descricao" optionValue="codigo"
+              placeholder="Selecione" (ngModelChange)="recalcularResumo()" appendTo="body" />
+          </div>
+
+          <div class="campo">
+            <label>Código de benefício fiscal</label>
+            <input pInputText [(ngModel)]="configuracao.codigoBeneficioFiscal" placeholder="Opcional" />
+          </div>
+
+          <div class="campo">
+            <label>EX-TIPI</label>
+            <input pInputText [(ngModel)]="configuracao.exTipi" placeholder="Quando aplicável" />
+          </div>
+
+          <div class="campo">
+            <label>Unidade tributável</label>
+            <input pInputText [(ngModel)]="configuracao.unidadeTributavel"
+              placeholder="UN, KG, L…" (ngModelChange)="recalcularResumo()" />
+          </div>
+
+          <div class="campo">
+            <label>Quantidade tributável</label>
+            <p-inputnumber [(ngModel)]="configuracao.quantidadeTributavel" [min]="0" [maxFractionDigits]="4" />
+          </div>
+
+          <div class="campo">
+            <label>Código ANP <i class="pi pi-info-circle discreto"
+              pTooltip="Obrigatório apenas para combustíveis e lubrificantes."></i></label>
+            <input pInputText [(ngModel)]="configuracao.codigoAnp" placeholder="Quando aplicável" />
+          </div>
+
+          <div class="campo campo-checkbox">
+            <p-checkbox [(ngModel)]="configuracao.producaoPropria" [binary]="true" inputId="producao" />
+            <label for="producao">Produção própria</label>
+          </div>
+        </div>
+      </p-accordion-content>
+    </p-accordion-panel>
+
+    <!-- 2. ICMS -->
+    <p-accordion-panel value="icms">
+      <p-accordion-header>ICMS</p-accordion-header>
+      <p-accordion-content>
+        <p-message severity="info" styleClass="nota-secao">
+          <div>
+            O <strong>CST/CSOSN e as alíquotas de ICMS não ficam no cadastro do produto</strong>:
+            dependem da operação, da origem, do destino e do cliente. Eles são definidos em
+            <strong>Regras Tributárias por Operação</strong>, abaixo — o que permite o mesmo produto
+            ter tratamento diferente em cada situação.
+          </div>
+        </p-message>
+
+        <p class="discreto">
+          Ao editar uma regra, os campos de ICMS exibidos mudam conforme o CST ou CSOSN escolhido.
+          O mapa que define isso vem do servidor, então acompanhar a legislação não exige alterar a tela.
+        </p>
+      </p-accordion-content>
+    </p-accordion-panel>
+
+    <!-- 3. PIS/COFINS -->
+    <p-accordion-panel value="pisCofins">
+      <p-accordion-header>PIS / COFINS</p-accordion-header>
+      <p-accordion-content>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>CST do PIS</label>
+            <p-select [(ngModel)]="configuracao.pisCofins.cstPis" [options]="referencias()!.cstPisCofins"
+              optionLabel="descricao" optionValue="codigo" placeholder="Selecione"
+              (ngModelChange)="recalcularResumo()" appendTo="body" />
+          </div>
+          <div class="campo">
+            <label>Alíquota do PIS (%)</label>
+            <p-inputnumber [(ngModel)]="configuracao.pisCofins.aliquotaPis" [min]="0" [max]="100"
+              [maxFractionDigits]="4" (ngModelChange)="recalcularResumo()" />
+          </div>
+          <div class="campo">
+            <label>Base de cálculo do PIS</label>
+            <input pInputText [(ngModel)]="configuracao.pisCofins.baseCalculoPis" />
+          </div>
+
+          <div class="campo">
+            <label>CST da COFINS</label>
+            <p-select [(ngModel)]="configuracao.pisCofins.cstCofins" [options]="referencias()!.cstPisCofins"
+              optionLabel="descricao" optionValue="codigo" placeholder="Selecione"
+              (ngModelChange)="recalcularResumo()" appendTo="body" />
+          </div>
+          <div class="campo">
+            <label>Alíquota da COFINS (%)</label>
+            <p-inputnumber [(ngModel)]="configuracao.pisCofins.aliquotaCofins" [min]="0" [max]="100"
+              [maxFractionDigits]="4" (ngModelChange)="recalcularResumo()" />
+          </div>
+          <div class="campo">
+            <label>Base de cálculo da COFINS</label>
+            <input pInputText [(ngModel)]="configuracao.pisCofins.baseCalculoCofins" />
+          </div>
+        </div>
+      </p-accordion-content>
+    </p-accordion-panel>
+
+    <!-- 4. IPI -->
+    <p-accordion-panel value="ipi">
+      <p-accordion-header>IPI</p-accordion-header>
+      <p-accordion-content>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>CST do IPI</label>
+            <p-select [(ngModel)]="configuracao.ipi.cstIpi" [options]="referencias()!.cstIpi"
+              optionLabel="descricao" optionValue="codigo" placeholder="Não aplicável"
+              [showClear]="true" (ngModelChange)="recalcularResumo()" appendTo="body" />
+          </div>
+          <div class="campo">
+            <label>Código de enquadramento</label>
+            <input pInputText [(ngModel)]="configuracao.ipi.codigoEnquadramento" placeholder="999" />
+          </div>
+          <div class="campo">
+            <label>Enquadramento legal</label>
+            <input pInputText [(ngModel)]="configuracao.ipi.enquadramentoLegal" />
+          </div>
+          <div class="campo">
+            <label>Alíquota (%)</label>
+            <p-inputnumber [(ngModel)]="configuracao.ipi.aliquotaIpi" [min]="0" [max]="100"
+              [maxFractionDigits]="4" (ngModelChange)="recalcularResumo()" />
+          </div>
+          <div class="campo">
+            <label>Unidade tributável</label>
+            <input pInputText [(ngModel)]="configuracao.ipi.unidadeTributavel" />
+          </div>
+          <div class="campo">
+            <label>Valor por unidade</label>
+            <p-inputnumber [(ngModel)]="configuracao.ipi.valorPorUnidade" [min]="0"
+              mode="currency" currency="BRL" locale="pt-BR" />
+          </div>
+        </div>
+      </p-accordion-content>
+    </p-accordion-panel>
+
+    <!-- 5, 6 e 7. Regras por operação -->
+    <p-accordion-panel value="regras">
+      <p-accordion-header>Regras Tributárias por Operação</p-accordion-header>
+      <p-accordion-content>
+        <p-message severity="info" styleClass="nota-secao">
+          <div>
+            <strong>O cadastro do produto não determina sozinho o imposto da nota.</strong>
+            Ele fornece as informações fiscais, que o motor tributário combina com os dados da
+            empresa e da operação. Cada linha abaixo é uma combinação possível — a mais
+            <em>específica</em> que corresponder à operação é a que vale.
+          </div>
+        </p-message>
+
+        @for (conflito of conflitos(); track $index) {
+          <p-message [severity]="conflito.severidade === 'AMBIGUA' ? 'error' : 'warn'">
+            <div>{{ conflito.explicacao }}</div>
+          </p-message>
+        }
+
+        <div class="painel-titulo" style="margin-top: 1rem">
+          <span class="discreto">{{ regras().length }} regra(s) cadastrada(s)</span>
+          <p-button label="Nova regra" icon="pi pi-plus" size="small" (onClick)="novaRegra()" />
+        </div>
+
+        <p-table [value]="regras()" [tableStyle]="{ 'min-width': '60rem' }">
+          <ng-template #header>
+            <tr>
+              <th style="width: 6rem">Prioridade</th>
+              <th>Regra</th>
+              <th style="width: 6rem">CFOP</th>
+              <th style="width: 8rem">CST/CSOSN</th>
+              <th style="width: 7rem">Status</th>
+              <th style="width: 11rem"></th>
+            </tr>
+          </ng-template>
+
+          <ng-template #body let-regra>
+            <tr [class.linha-conflito]="regraEmConflito(regra)">
+              <td>{{ regra.prioridade }}</td>
+              <td>
+                <strong>{{ regra.descricao }}</strong><br />
+                <small class="discreto">{{ descreverCondicoes(regra) }}</small>
+              </td>
+              <td><code>{{ regra.resultado.cfop || '—' }}</code></td>
+              <td><code>{{ regra.resultado.cstIcms || regra.resultado.csosn || '—' }}</code></td>
+              <td>
+                <p-tag [severity]="regra.ativa ? 'success' : 'secondary'"
+                  [value]="regra.ativa ? 'Ativa' : 'Inativa'" />
+              </td>
+              <td>
+                <p-button icon="pi pi-pencil" severity="secondary" [text]="true"
+                  pTooltip="Editar" (onClick)="editarRegra(regra)" />
+                <p-button icon="pi pi-copy" severity="secondary" [text]="true"
+                  pTooltip="Duplicar" (onClick)="duplicarRegra(regra)" />
+                <p-button [icon]="regra.ativa ? 'pi pi-ban' : 'pi pi-check'" severity="secondary"
+                  [text]="true" [pTooltip]="regra.ativa ? 'Inativar' : 'Ativar'"
+                  (onClick)="alternarAtiva(regra)" />
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="6" class="vazio">
+                Nenhuma regra cadastrada. Sem ao menos uma, o sistema não sabe qual CFOP usar.
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-accordion-content>
+    </p-accordion-panel>
+
+    <!-- 9. Simulação -->
+    <p-accordion-panel value="simulacao">
+      <p-accordion-header>Simular tributação</p-accordion-header>
+      <p-accordion-content>
+        <div class="grade-campos">
+          <div class="campo">
+            <label>Tipo de operação</label>
+            <p-select [(ngModel)]="contexto.operacao" [options]="referencias()!.tiposOperacao"
+              optionLabel="descricao" optionValue="codigo" appendTo="body" />
+          </div>
+          <div class="campo">
+            <label>UF de origem</label>
+            <p-select [(ngModel)]="contexto.ufOrigem" [options]="referencias()!.ufs" appendTo="body" />
+          </div>
+          <div class="campo">
+            <label>UF de destino</label>
+            <p-select [(ngModel)]="contexto.ufDestino" [options]="referencias()!.ufs" appendTo="body" />
+          </div>
+          <div class="campo">
+            <label>Tipo de cliente</label>
+            <p-select [(ngModel)]="contexto.tipoCliente" [options]="referencias()!.tiposCliente"
+              optionLabel="descricao" optionValue="codigo" appendTo="body" />
+          </div>
+          <div class="campo">
+            <label>Regime da empresa</label>
+            <p-select [(ngModel)]="contexto.regimeEmpresa" [options]="referencias()!.regimesTributarios"
+              optionLabel="descricao" optionValue="codigo" appendTo="body" />
+          </div>
+          <div class="campo">
+            <label>Valor da operação</label>
+            <p-inputnumber [(ngModel)]="valorOperacao" mode="currency" currency="BRL" locale="pt-BR" [min]="0" />
+          </div>
+          <div class="campo campo-checkbox">
+            <p-checkbox [(ngModel)]="contexto.consumidorFinal" [binary]="true" inputId="consumidor" />
+            <label for="consumidor">Consumidor final</label>
+          </div>
+          <div class="campo campo-checkbox">
+            <p-checkbox [(ngModel)]="contexto.contribuinteIcms" [binary]="true" inputId="contribuinte" />
+            <label for="contribuinte">Contribuinte de ICMS</label>
+          </div>
+        </div>
+
+        <p-button label="Simular tributação" icon="pi pi-calculator" [loading]="simulando()"
+          (onClick)="simular()" styleClass="mt" />
+
+        @if (simulacao(); as s) {
+          <div class="resultado-simulacao">
+            @if (!s.encontrou) {
+              <p-message severity="warn"
+                text="Nenhuma regra ativa corresponde a esta combinação de operação." />
+            } @else {
+              <div class="cabecalho-simulacao">
+                <div><span class="discreto">CFOP</span><strong>{{ s.cfop }}</strong></div>
+                <div><span class="discreto">CST/CSOSN</span><strong>{{ s.cstOuCsosn }}</strong></div>
+                <div><span class="discreto">Valor da operação</span>
+                  <strong>{{ s.valorOperacao | currency: 'BRL' }}</strong></div>
+                <div><span class="discreto">Total de tributos</span>
+                  <strong>{{ s.totalTributos | currency: 'BRL' }}</strong></div>
+              </div>
+
+              <p-table [value]="s.tributos" styleClass="tabela-tributos">
+                <ng-template #header>
+                  <tr>
+                    <th style="width: 8rem">Tributo</th>
+                    <th style="width: 6rem">CST</th>
+                    <th style="width: 9rem">Base</th>
+                    <th style="width: 7rem">Alíquota</th>
+                    <th style="width: 9rem">Valor</th>
+                    <th>Observação</th>
+                  </tr>
+                </ng-template>
+                <ng-template #body let-t>
+                  <tr>
+                    <td><strong>{{ t.nome }}</strong></td>
+                    <td class="discreto">{{ t.situacao || '—' }}</td>
+                    <td>{{ t.baseCalculo !== null ? (t.baseCalculo | currency: 'BRL') : '—' }}</td>
+                    <td>{{ t.aliquota !== null ? t.aliquota + '%' : '—' }}</td>
+                    <td>{{ t.valor !== null ? (t.valor | currency: 'BRL') : '—' }}</td>
+                    <td class="discreto">{{ t.observacao }}</td>
+                  </tr>
+                </ng-template>
+              </p-table>
+
+              <!-- Item 9: "Como chegamos a este cálculo?" -->
+              <div class="trilha">
+                <p-button
+                  [label]="trilhaAberta() ? 'Ocultar o raciocínio' : 'Como chegamos a este cálculo?'"
+                  [icon]="trilhaAberta() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+                  severity="secondary" [text]="true" (onClick)="trilhaAberta.set(!trilhaAberta())" />
+
+                @if (trilhaAberta()) {
+                  <ol class="passos-trilha">
+                    @for (passo of s.trilha; track $index) {
+                      <li>{{ passo }}</li>
+                    }
+                  </ol>
+
+                  <p class="discreto"><strong>Regras avaliadas:</strong></p>
+                  <ul class="candidatas">
+                    @for (c of s.candidatas; track c.regra.id) {
+                      <li [class.escolhida]="c.escolhida">
+                        {{ c.regra.descricao }}
+                        <small class="discreto">
+                          — {{ c.especificidade }} condição(ões)
+                          {{ c.escolhida ? '· aplicada' : '· descartada' }}
+                        </small>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+
+              <p-message severity="warn" styleClass="mt">
+                <div>{{ s.aviso }}</div>
+              </p-message>
+            }
+          </div>
+        }
+      </p-accordion-content>
+    </p-accordion-panel>
+  </p-accordion>
+
+  <app-editor-regra
+    [aberto]="editorAberto()"
+    [regra]="regraEmEdicao"
+    [referencias]="referencias()"
+    [campos]="campos()"
+    (salvar)="aoSalvarRegra($event)"
+    (fechar)="editorAberto.set(false)"
+  />
+}

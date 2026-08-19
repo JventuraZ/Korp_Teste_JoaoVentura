@@ -1,0 +1,60 @@
+@if (carregando()) {
+  <div class="painel"><div class="vazio">Carregando produto…</div></div>
+} @else if (produto(); as p) {
+  <div class="cabecalho-produto">
+    <div>
+      <a routerLink="/produtos" class="voltar">
+        <i class="pi pi-arrow-left"></i> Produtos
+      </a>
+      <h1><code>{{ p.codigo }}</code> {{ p.descricao }}</h1>
+    </div>
+    <p-tag [severity]="p.saldo === 0 ? 'danger' : p.saldo <= 5 ? 'warn' : 'success'"
+      [value]="'Saldo: ' + p.saldo" />
+  </div>
+
+  <p-tabs value="gerais">
+    <p-tablist>
+      <p-tab value="gerais"><i class="pi pi-box"></i> Dados gerais</p-tab>
+      <p-tab value="fiscal"><i class="pi pi-receipt"></i> Fiscal / Tributação</p-tab>
+    </p-tablist>
+
+    <p-tabpanels>
+      <p-tabpanel value="gerais">
+        <div class="painel">
+          <div class="grade-campos">
+            <div class="campo">
+              <label>Código</label>
+              <input pInputText [value]="p.codigo" disabled />
+              <small class="discreto">O código identifica o produto e não pode ser alterado.</small>
+            </div>
+            <div class="campo">
+              <label>Descrição</label>
+              <input pInputText [(ngModel)]="formulario.descricao" />
+            </div>
+            <div class="campo">
+              <label>Saldo</label>
+              <p-inputnumber [(ngModel)]="formulario.saldo" [min]="0" [showButtons]="true" />
+              <small class="discreto">
+                Ajuste manual de cadastro — grava um movimento do tipo AJUSTE, separado
+                da baixa por nota fiscal.
+              </small>
+            </div>
+          </div>
+          <p-button label="Salvar" icon="pi pi-check" [loading]="salvando()"
+            (onClick)="salvarDadosGerais()" styleClass="mt" />
+        </div>
+      </p-tabpanel>
+
+      <p-tabpanel value="fiscal">
+        <app-aba-fiscal [codigo]="p.codigo" />
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+} @else {
+  <div class="painel">
+    <div class="vazio">
+      Produto <code>{{ codigo() }}</code> não encontrado.
+      <br /><a routerLink="/produtos">Voltar para a lista</a>
+    </div>
+  </div>
+}

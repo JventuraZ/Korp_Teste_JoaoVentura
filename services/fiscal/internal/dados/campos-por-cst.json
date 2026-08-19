@@ -1,0 +1,45 @@
+{
+  "_aviso": "Mapa de quais campos fazem sentido para cada CST/CSOSN. Deriva do layout da NF-e e e CONFIGURAVEL: ajustar aqui muda a tela, sem recompilar o frontend. Confira contra o manual vigente antes de usar em producao.",
+  "icms": {
+    "00": ["modalidadeBaseCalculo", "aliquotaIcms", "fcp"],
+    "10": ["modalidadeBaseCalculo", "aliquotaIcms", "fcp", "modalidadeBaseCalculoSt", "mva", "reducaoBaseSt", "aliquotaIcmsSt", "fcpSt"],
+    "20": ["modalidadeBaseCalculo", "reducaoBaseCalculo", "aliquotaIcms", "fcp", "icmsDesonerado", "motivoDesoneracao"],
+    "30": ["modalidadeBaseCalculoSt", "mva", "reducaoBaseSt", "aliquotaIcmsSt", "fcpSt", "icmsDesonerado", "motivoDesoneracao"],
+    "40": ["icmsDesonerado", "motivoDesoneracao"],
+    "41": ["icmsDesonerado", "motivoDesoneracao"],
+    "50": ["icmsDesonerado", "motivoDesoneracao"],
+    "51": ["modalidadeBaseCalculo", "reducaoBaseCalculo", "aliquotaIcms", "percentualDiferimento", "fcp"],
+    "60": ["fcpStRetido", "valorPautaFiscal"],
+    "70": ["modalidadeBaseCalculo", "reducaoBaseCalculo", "aliquotaIcms", "fcp", "modalidadeBaseCalculoSt", "mva", "reducaoBaseSt", "aliquotaIcmsSt", "fcpSt", "icmsDesonerado", "motivoDesoneracao"],
+    "90": ["modalidadeBaseCalculo", "reducaoBaseCalculo", "aliquotaIcms", "fcp", "modalidadeBaseCalculoSt", "mva", "reducaoBaseSt", "aliquotaIcmsSt", "fcpSt", "icmsDesonerado", "motivoDesoneracao", "valorPautaFiscal"]
+  },
+  "csosn": {
+    "101": ["percentualCreditoSimples"],
+    "102": [],
+    "103": [],
+    "201": ["percentualCreditoSimples", "modalidadeBaseCalculoSt", "mva", "reducaoBaseSt", "aliquotaIcmsSt", "fcpSt"],
+    "202": ["modalidadeBaseCalculoSt", "mva", "reducaoBaseSt", "aliquotaIcmsSt", "fcpSt"],
+    "203": ["modalidadeBaseCalculoSt", "mva", "reducaoBaseSt", "aliquotaIcmsSt", "fcpSt"],
+    "300": [],
+    "400": [],
+    "500": ["fcpStRetido", "valorPautaFiscal"],
+    "900": ["modalidadeBaseCalculo", "reducaoBaseCalculo", "aliquotaIcms", "percentualCreditoSimples", "modalidadeBaseCalculoSt", "mva", "reducaoBaseSt", "aliquotaIcmsSt", "fcpSt"]
+  },
+  "rotulos": {
+    "modalidadeBaseCalculo": "Modalidade da base de cálculo",
+    "reducaoBaseCalculo": "Redução da base de cálculo (%)",
+    "aliquotaIcms": "Alíquota de ICMS (%)",
+    "percentualDiferimento": "Percentual de diferimento (%)",
+    "icmsDesonerado": "ICMS desonerado",
+    "motivoDesoneracao": "Motivo da desoneração",
+    "fcp": "FCP (%)",
+    "modalidadeBaseCalculoSt": "Modalidade da base de cálculo do ST",
+    "mva": "MVA / IVA (%)",
+    "reducaoBaseSt": "Redução da base de cálculo do ST (%)",
+    "aliquotaIcmsSt": "Alíquota do ICMS-ST (%)",
+    "fcpSt": "FCP-ST (%)",
+    "fcpStRetido": "FCP-ST retido anteriormente (%)",
+    "valorPautaFiscal": "Valor da pauta fiscal",
+    "percentualCreditoSimples": "Percentual de crédito do Simples Nacional (%)"
+  }
+}
